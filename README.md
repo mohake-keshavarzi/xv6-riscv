@@ -1,5 +1,5 @@
 # Sharif University OS Project
-This fork is made for implementing thread support in xv6 as the final project of the Operating Systems course held by Dr. Assadi at Sharif University of Technology.
+This fork is made for implementing thread support in xv6 as the final project of the Operating Systems course held by Dr. Asadi at Sharif University of Technology.
 
 ## xv6
 xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
