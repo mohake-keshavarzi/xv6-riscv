@@ -81,7 +81,7 @@ struct trapframe {
 
 struct thread{
   int t_id;
-  
+  struct context context;
 };
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
