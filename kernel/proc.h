@@ -79,12 +79,14 @@ struct trapframe {
   /* 280 */ uint64 t6;
 };
 
+
+enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+
 struct thread{
   int t_id;
   struct context context;
+  enum procstate state;
 };
-
-enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
 struct proc {
@@ -105,7 +107,7 @@ struct proc {
   uint64 sz;                   // Size of process memory (bytes)
   pagetable_t pagetable;       // User page table
   struct trapframe *trapframe; // data page for trampoline.S
-  struct context context;      // swtch() here to run process
+  // struct context context;      // swtch() here to run process // It is now embedded in the main_thread
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
