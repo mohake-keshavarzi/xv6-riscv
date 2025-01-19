@@ -704,6 +704,7 @@ procdump(void)
   [ZOMBIE]    "zombie"
   };
   struct proc *p;
+  struct thread *t;
   char *state;
 
   printf("\n");
@@ -716,5 +717,13 @@ procdump(void)
       state = "???";
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
+    printf("  Threads:\n");
+    for (t= p->threads; t< &p->threads[MAXTHREADNUM]; t++){
+      if(t->state==ACTIVE){
+        printf("  -->t_id: ");
+        printf("%d",t->t_id);
+        printf("\n");
+      }
+    }
   }
 }
