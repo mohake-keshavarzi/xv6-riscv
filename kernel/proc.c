@@ -451,6 +451,7 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
+  struct thread *t;
 
   c->proc = 0;
   for(;;){
@@ -468,7 +469,11 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
-        swtch(&c->context, &p->main_thread.context);
+        for(t=p->threads; t< &p->threads[MAXTHREADNUM]; t++)
+          if(t->state==ACTIVE){
+            swtch(&c->context, &t->context);
+            break;
+          }
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
