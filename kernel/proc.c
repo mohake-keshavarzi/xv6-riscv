@@ -142,10 +142,15 @@ found:
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
-  memset(&p->context, 0, sizeof(p->context));
-  p->context.ra = (uint64)forkret;
-  p->context.sp = p->kstack + PGSIZE;
-
+  memset(&p->threads[MAINTHREADINDEX].context, 0, sizeof(p->threads[MAINTHREADINDEX].context));
+  p->threads[MAINTHREADINDEX].context.ra = (uint64)forkret;
+  p->threads[MAINTHREADINDEX].context.sp = p->kstack + PGSIZE;
+  p->threads[MAINTHREADINDEX].t_index=0;
+  p->threads[MAINTHREADINDEX].state=RUNNABLE;
+  p->current_thread_index=p->threads[MAINTHREADINDEX].t_index;
+  // Deactivate all other threads of the process
+  for(int i=1;i<MAXTHREAD;i++)
+    p->threads[i].state=UNUSED;
   return p;
 }
 
@@ -446,6 +451,7 @@ scheduler(void)
 {
   struct proc *p;
   struct cpu *c = mycpu();
+  struct thread *t;
 
   c->proc = 0;
   for(;;){
@@ -463,7 +469,12 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
-        swtch(&c->context, &p->context);
+        for(t= p->threads; t< &p->threads[MAXTHREAD]; t++)
+          if(t->state==RUNNABLE){
+            t->state=RUNNING;
+            p->current_thread_index=t->t_index;
+            swtch(&c->context, &t->context);
+          }
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
@@ -503,7 +514,7 @@ sched(void)
     panic("sched interruptible");
 
   intena = mycpu()->intena;
-  swtch(&p->context, &mycpu()->context);
+  swtch(&p->threads[p->current_thread_index].context, &mycpu()->context);
   mycpu()->intena = intena;
 }
 
