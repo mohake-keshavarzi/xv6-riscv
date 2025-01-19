@@ -146,7 +146,7 @@ found:
   p->main_thread.context.ra = (uint64)forkret;
   p->main_thread.context.sp = p->kstack + PGSIZE;
   p->main_thread.t_id=0;
-  p->main_thread.state=USED;
+  p->main_thread.state=ACTIVE;
   return p;
 }
 
@@ -464,7 +464,6 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
-        p->main_thread.state=RUNNING;
         swtch(&c->context, &p->main_thread.context);
 
         // Process is done running for now.
