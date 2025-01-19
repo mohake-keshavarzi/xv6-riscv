@@ -171,6 +171,7 @@ found:
 static void
 freeproc(struct proc *p)
 {
+  struct thread *t;
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
@@ -185,6 +186,11 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  for(t=p->threads; t< &p->threads[MAXTHREADNUM]; t++){
+    t->state=INACTIVE;
+  }
+
+  
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -525,7 +531,7 @@ sched(void)
   if(intr_get())
     panic("sched interruptible");
   if(t->state!=ACTIVE)
-    panic("Unactive thread assigned to CPU");
+    panic("Inactive thread assigned to CPU");
 
   intena = mycpu()->intena;
   swtch(&t->context, &mycpu()->context);
