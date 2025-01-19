@@ -21,6 +21,7 @@ struct context {
 // Per-CPU state.
 struct cpu {
   struct proc *proc;          // The process running on this cpu, or null.
+  struct thread *thread;       // The thread that is running on the cpu. It should be one of the proc's threads
   struct context context;     // swtch() here to enter scheduler().
   int noff;                   // Depth of push_off() nesting.
   int intena;                 // Were interrupts enabled before push_off()?

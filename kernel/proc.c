@@ -89,6 +89,17 @@ myproc(void)
   return p;
 }
 
+// Return the current struct thread *, or zero if none.
+struct thread*
+mythread(void)
+{
+  push_off();
+  struct cpu *c = mycpu();
+  struct thread *thread = c->thread;
+  pop_off();
+  return thread;
+}
+
 int
 allocpid()
 {
@@ -471,6 +482,7 @@ scheduler(void)
         c->proc = p;
         for(t=p->threads; t< &p->threads[MAXTHREADNUM]; t++)
           if(t->state==ACTIVE){
+            c->thread=t;
             swtch(&c->context, &t->context);
             break;
           }
@@ -502,6 +514,7 @@ sched(void)
 {
   int intena;
   struct proc *p = myproc();
+  struct thread *t= mythread();
 
   if(!holding(&p->lock))
     panic("sched p->lock");
@@ -511,9 +524,11 @@ sched(void)
     panic("sched running");
   if(intr_get())
     panic("sched interruptible");
+  if(t->state!=ACTIVE)
+    panic("Unactive thread assigned to CPU");
 
   intena = mycpu()->intena;
-  swtch(&p->main_thread.context, &mycpu()->context);
+  swtch(&t->context, &mycpu()->context);
   mycpu()->intena = intena;
 }
 
