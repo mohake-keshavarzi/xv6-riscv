@@ -142,15 +142,19 @@ found:
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
-  memset(&p->threads[MAINTHREADINDEX].context, 0, sizeof(p->threads[MAINTHREADINDEX].context));
-  p->threads[MAINTHREADINDEX].context.ra = (uint64)forkret;
-  p->threads[MAINTHREADINDEX].context.sp = p->kstack + PGSIZE;
-  p->threads[MAINTHREADINDEX].t_index=0;
-  p->threads[MAINTHREADINDEX].state=RUNNABLE;
-  p->current_thread_index=p->threads[MAINTHREADINDEX].t_index;
-  // Deactivate all other threads of the process
-  for(int i=1;i<MAXTHREAD;i++)
+  struct thread *main_thread=&p->threads[MAINTHREADINDEX];
+  
+  memset(&main_thread->context, 0, sizeof(main_thread->context));
+  main_thread->context.ra = (uint64)forkret;
+  main_thread->context.sp = p->kstack + PGSIZE;
+  main_thread->t_index=0;
+  main_thread->state=RUNNABLE;
+  p->current_thread_index=main_thread->t_index;
+  // Deactivate all other threads of the process and set their indexes
+  for(int i=1;i<MAXTHREAD;i++){
     p->threads[i].state=UNUSED;
+    p->threads[i].t_index=i;
+  }
   return p;
 }
 
@@ -503,6 +507,7 @@ sched(void)
 {
   int intena;
   struct proc *p = myproc();
+  struct thread *t = &p->threads[p->current_thread_index];
 
   if(!holding(&p->lock))
     panic("sched p->lock");
@@ -514,7 +519,7 @@ sched(void)
     panic("sched interruptible");
 
   intena = mycpu()->intena;
-  swtch(&p->threads[p->current_thread_index].context, &mycpu()->context);
+  swtch(&t->context, &mycpu()->context);
   mycpu()->intena = intena;
 }
 
