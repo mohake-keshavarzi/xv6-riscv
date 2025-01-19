@@ -110,6 +110,7 @@ static struct proc*
 allocproc(void)
 {
   struct proc *p;
+  struct thread* main_thread;
 
   for(p = proc; p < &proc[NPROC]; p++) {
     acquire(&p->lock);
@@ -124,6 +125,10 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  main_thread=&p->threads[MAINTHREADINDEX];
+  main_thread->t_id = allocpid();
+  main_thread->state=ACTIVE;
+  
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -142,11 +147,10 @@ found:
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
-  memset(&p->main_thread.context, 0, sizeof(p->main_thread.context));
-  p->main_thread.context.ra = (uint64)forkret;
-  p->main_thread.context.sp = p->kstack + PGSIZE;
-  p->main_thread.t_id=0;
-  p->main_thread.state=ACTIVE;
+  memset(&main_thread->context, 0, sizeof(main_thread->context));
+  main_thread->context.ra = (uint64)forkret;
+  main_thread->context.sp = p->kstack + PGSIZE;
+  
   return p;
 }
 
