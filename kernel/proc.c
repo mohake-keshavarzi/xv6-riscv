@@ -142,10 +142,11 @@ found:
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
-  memset(&p->context, 0, sizeof(p->context));
-  p->context.ra = (uint64)forkret;
-  p->context.sp = p->kstack + PGSIZE;
-
+  memset(&p->main_thread.context, 0, sizeof(p->main_thread.context));
+  p->main_thread.context.ra = (uint64)forkret;
+  p->main_thread.context.sp = p->kstack + PGSIZE;
+  p->main_thread.t_id=0;
+  p->main_thread.state=USED;
   return p;
 }
 
@@ -463,7 +464,8 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
-        swtch(&c->context, &p->context);
+        p->main_thread.state=RUNNING;
+        swtch(&c->context, &p->main_thread.context);
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
@@ -503,7 +505,7 @@ sched(void)
     panic("sched interruptible");
 
   intena = mycpu()->intena;
-  swtch(&p->context, &mycpu()->context);
+  swtch(&p->main_thread.context, &mycpu()->context);
   mycpu()->intena = intena;
 }
 
