@@ -86,7 +86,8 @@ enum threadstate{INACTIVE,ACTIVE};
 struct thread{
   int t_id;
   enum threadstate state;
-  struct context context;
+  struct context context; // Including the user stackS
+  uint64 kstack; // Kernel stack for the thread
 };
 // Per-process state
 struct proc {
@@ -103,7 +104,7 @@ struct proc {
   struct proc *parent;         // Parent process
 
   // these are private to the process, so p->lock need not be held.
-  uint64 kstack;               // Virtual address of kernel stack
+  // uint64 kstack;               // Virtual address of kernel stack
   uint64 sz;                   // Size of process memory (bytes)
   pagetable_t pagetable;       // User page table
   struct trapframe *trapframe; // data page for trampoline.S

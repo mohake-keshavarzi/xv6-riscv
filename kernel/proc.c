@@ -54,7 +54,7 @@ procinit(void)
   for(p = proc; p < &proc[NPROC]; p++) {
       initlock(&p->lock, "proc");
       p->state = UNUSED;
-      p->kstack = KSTACK((int) (p - proc));
+      p->threads[MAINTHREADINDEX].kstack = KSTACK((int) (p - proc));
   }
 }
 
@@ -186,7 +186,7 @@ found:
   // which returns to user space.
   memset(&main_thread->context, 0, sizeof(main_thread->context));
   main_thread->context.ra = (uint64)forkret;
-  main_thread->context.sp = p->kstack + PGSIZE;
+  main_thread->context.sp = main_thread->kstack + PGSIZE;
   
   return p;
 }
