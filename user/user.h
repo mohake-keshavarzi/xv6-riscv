@@ -1,4 +1,5 @@
 struct stat;
+struct process_data;
 
 // system calls
 int fork(void);
@@ -23,6 +24,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int gettid(void);
+int next_process(int before_pid , struct process_data* proc);
 
 // ulib.c
 int stat(const char*, struct stat*);

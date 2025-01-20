@@ -140,6 +140,9 @@ UPROGS=\
 	$U/_wc\
 	$U/_zombie\
 	$U/_currentprocess\
+	$U/_tester\
+	$U/_proclist\
+
 
 
 fs.img: mkfs/mkfs README $(UPROGS)

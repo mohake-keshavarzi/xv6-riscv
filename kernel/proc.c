@@ -100,6 +100,32 @@ mythread(void)
   return thread;
 }
 
+struct proc* nextProcess(int before_pid){
+  int next_pid=__INT_MAX__;
+  int index=-1;
+  char flag='n';
+  for (uint32 i = 0; i < NPROC; i++)
+  {
+    if (proc[i].state == SLEEPING || proc[i].state == RUNNABLE || proc[i].state ==
+    RUNNING || proc[i].state == ZOMBIE)
+    {
+      int c_pid=proc[i].pid;
+      if(c_pid>before_pid){
+        if(c_pid<next_pid){
+          next_pid=c_pid;
+          index=i;
+          flag='y';
+        }
+      }
+    } 
+  }
+  if (flag=='y'){
+    return &proc[index];
+  }
+  else return 0;
+
+}
+
 int
 allocpid()
 {

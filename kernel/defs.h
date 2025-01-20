@@ -96,6 +96,7 @@ struct cpu*     mycpu(void);
 struct cpu*     getmycpu(void);
 struct proc*    myproc();
 struct thread*  mythread();
+struct proc*    nextProcess(int);
 void            procinit(void);
 void            scheduler(void) __attribute__((noreturn));
 void            sched(void);
