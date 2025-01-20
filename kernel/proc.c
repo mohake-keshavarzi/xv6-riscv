@@ -522,6 +522,7 @@ scheduler(void)
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
+        c->thread=0;
         found = 1;
       }
       release(&p->lock);
