@@ -516,7 +516,7 @@ scheduler(void)
           if(t->state==ACTIVE){
             c->thread=t;
             swtch(&c->context, &t->context);
-            break;
+            // break;
           }
 
         // Process is done running for now.
