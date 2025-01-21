@@ -54,7 +54,8 @@ procinit(void)
   for(p = proc; p < &proc[NPROC]; p++) {
       initlock(&p->lock, "proc");
       p->state = UNUSED;
-      p->threads[MAINTHREADINDEX].kstack = KSTACK((int) (p - proc));
+      //TODO _______________________________________________________________________________________________
+      p->threads[MAINTHREADINDEX].kstack = KSTACK((int) (p - proc)); ////////////////////////
   }
 }
 
@@ -164,7 +165,7 @@ found:
   p->state = USED;
   main_thread=&p->threads[MAINTHREADINDEX];
   main_thread->t_id = allocpid();
-  main_thread->state=ACTIVE;
+  main_thread->state=MAIN_THREAD;
   
 
   // Allocate a trapframe page.
@@ -321,6 +322,38 @@ growproc(int n)
   p->sz = sz;
   return 0;
 }
+
+
+int
+new_thread(void (entry)(void )){
+  struct proc *p = myproc(); // Get current process
+  struct thread *t = 0;
+
+  // Find an unused thread slot
+  acquire(&p->lock);
+  for (int i = 0; i < MAXTHREADNUM; i++) {
+      if (p->threads[i].state == INACTIVE) {
+          t = &p->threads[i];
+          t->t_id = allocpid(); // Assign thread ID
+          t->state = ACTIVE;
+          break;
+      }
+  }
+
+  if (!t) {
+      return -1; // No available thread slot
+  }  
+
+  // Initialize thread context
+  memset(&t->context, 0, sizeof(t->context));
+  t->context.ra = (uint64)entry;        // Set return address to entry point
+  t->context.sp = (uint64)(t->kstack + PGSIZE);  // Set stack pointer
+
+  release(&p->lock);
+
+  return t->t_id;
+}
+
 
 // Create a new process, copying the parent.
 // Sets up child kernel stack to return as if from fork() system call.
@@ -513,7 +546,7 @@ scheduler(void)
         p->state = RUNNING;
         c->proc = p;
         for(t=p->threads; t< &p->threads[MAXTHREADNUM]; t++)
-          if(t->state==ACTIVE){
+          if(t->state==ACTIVE || t->state==MAIN_THREAD){
             c->thread=t;
             swtch(&c->context, &t->context);
             // break;
@@ -557,7 +590,7 @@ sched(void)
     panic("sched running");
   if(intr_get())
     panic("sched interruptible");
-  if(t->state!=ACTIVE)
+  if(t->state==INACTIVE)
     panic("Inactive thread assigned to CPU");
 
   intena = mycpu()->intena;
@@ -754,6 +787,11 @@ procdump(void)
     for (t= p->threads; t< &p->threads[MAXTHREADNUM]; t++){
       if(t->state==ACTIVE){
         printf("  -->t_id: ");
+        printf("%d",t->t_id);
+        printf("\n");
+      }
+      if(t->state==MAIN_THREAD){
+        printf("  *-->t_id: ");
         printf("%d",t->t_id);
         printf("\n");
       }

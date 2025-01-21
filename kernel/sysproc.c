@@ -53,7 +53,7 @@ sys_next_process(void)
   strncpy(result.name,my_proc->name,16);
   for (int i = 0; i < MAXTHREADNUM; i++)
   {
-    if(my_proc->threads[i].state==ACTIVE)
+    if(my_proc->threads[i].state==ACTIVE || my_proc->threads[i].state==MAIN_THREAD)
       result.active_tids[i]=my_proc->threads[i].t_id;
     else
       result.active_tids[i]=-1;
