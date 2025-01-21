@@ -65,6 +65,15 @@ sys_next_process(void)
 
 }
 
+uint64
+sys_thread_create(void)
+{
+  uint64 entry;
+  argaddr(0, &entry);
+  
+  return new_thread((void (*)(void))entry);
+  }
+
 
 uint64
 sys_fork(void)

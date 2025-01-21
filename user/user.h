@@ -25,6 +25,7 @@ int sleep(int);
 int uptime(void);
 int gettid(void);
 int next_process(int before_pid , struct process_data* proc);
+int thread_create(void(entry)(void));
 
 // ulib.c
 int stat(const char*, struct stat*);

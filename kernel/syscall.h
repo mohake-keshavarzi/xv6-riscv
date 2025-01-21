@@ -22,3 +22,5 @@
 #define SYS_close  21
 #define SYS_gettid  22
 #define SYS_next_process 23
+#define SYS_thread_create 24
+

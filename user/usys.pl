@@ -38,3 +38,5 @@ entry("sleep");
 entry("uptime");
 entry("gettid");
 entry("next_process");
+entry("thread_create");
+
