@@ -47,6 +47,8 @@
 // each surrounded by invalid guard pages.
 #define KSTACK(p) (TRAMPOLINE - ((p)+1)* 2*PGSIZE)
 
+#define THRKSTACK(t) (PHYSTOP + ((t)+1)* 2*PGSIZE)
+
 // User memory layout.
 // Address zero first:
 //   text

@@ -9,6 +9,7 @@
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
+struct thread thr[TOTALTHREADS];
 
 struct proc *initproc;
 
@@ -33,12 +34,20 @@ void
 proc_mapstacks(pagetable_t kpgtbl)
 {
   struct proc *p;
+  struct thread* th;
   
   for(p = proc; p < &proc[NPROC]; p++) {
     char *pa = kalloc();
     if(pa == 0)
       panic("kalloc");
     uint64 va = KSTACK((int) (p - proc));
+    kvmmap(kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
+  }
+  for(th=thr; th<&thr[TOTALTHREADS];th++){
+    char *pa = kalloc();
+    if(pa == 0)
+      panic("kalloc");
+    uint64 va = THRKSTACK((int) (th - thr));
     kvmmap(kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
   }
 }
@@ -48,15 +57,21 @@ void
 procinit(void)
 {
   struct proc *p;
+  struct thread* th;
+
   
   initlock(&pid_lock, "nextpid");
   initlock(&wait_lock, "wait_lock");
   for(p = proc; p < &proc[NPROC]; p++) {
-      initlock(&p->lock, "proc");
-      p->state = UNUSED;
-      //TODO _______________________________________________________________________________________________
-      p->main_thread.kstack = KSTACK((int) (p - proc)); ////////////////////////
+    initlock(&p->lock, "proc");
+    p->state = UNUSED;
+    p->main_thread.kstack = KSTACK((int) (p - proc)); ////////////////////////
   }
+  for(th=thr; th<&thr[TOTALTHREADS];th++){
+    th->state=INACTIVE;
+    th->kstack= THRKSTACK((int) (th - thr));
+  }
+
 }
 
 // Must be called with interrupts disabled,
