@@ -325,6 +325,30 @@ fork(void)
   return pid;
 }
 
+int clone(void (func)(void)) {
+    struct proc *np;
+    struct proc *p = myproc(); // Get the current process
+
+    // Allocate process slot
+    if ((np = allocproc()) == 0)
+        return -1;
+
+    // Share address space
+    np->pagetable = p->pagetable;
+
+    // Set up new thread's stack
+    np->trapframe->sp = np->kstack + PGSIZE;
+    np->trapframe->epc = (uint64)func; // Entry point
+    // *(uint64 *)(np->tf->sp - 8) = (uint64)arg; // Pass argument
+
+    // Inherit other properties
+    // np->parent = p;
+    np->state = RUNNABLE;
+
+    return np->pid;
+}
+
+
 // Pass p's abandoned children to init.
 // Caller must hold wait_lock.
 void
