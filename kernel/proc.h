@@ -106,5 +106,6 @@ struct proc {
   char name[16];               // Process name (debugging)
 
   struct proc *sub_procs[NSUBPROCPERPROC];
+  int sub_proc_count;
   enum proctype type;
 };

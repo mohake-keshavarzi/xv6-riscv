@@ -124,6 +124,8 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  p->type=MAIN;
+  p->sub_proc_count=0;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -169,6 +171,8 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  p->type=MAIN;
+  p->sub_proc_count=0;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -328,22 +332,32 @@ fork(void)
 int clone(void (func)(void)) {
     struct proc *np;
     struct proc *p = myproc(); // Get the current process
-
     // Allocate process slot
     if ((np = allocproc()) == 0)
         return -1;
 
+    release(&np->lock);
     // Share address space
+    acquire(&p->lock);
+    p->sub_procs[p->sub_proc_count]=np;
+    p->sub_proc_count++;
+    release(&p->lock);
+    acquire(&np->lock);
     np->pagetable = p->pagetable;
+    np->state = RUNNABLE;
+    np->type=SUB;
 
     // Set up new thread's stack
-    np->trapframe->sp = np->kstack + PGSIZE;
+    // np->trapframe->sp = np->kstack + PGSIZE;
+
     np->trapframe->epc = (uint64)func; // Entry point
     // *(uint64 *)(np->tf->sp - 8) = (uint64)arg; // Pass argument
 
     // Inherit other properties
     // np->parent = p;
-    np->state = RUNNABLE;
+    // acquire(&np->lock);
+
+    release(&np->lock);
 
     return np->pid;
 }
@@ -480,15 +494,20 @@ scheduler(void)
 
     int found = 0;
     for(p = proc; p < &proc[NPROC]; p++) {
+      if(p->type==SUB) continue;
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
         // Switch to chosen process.  It is the process's job
         // to release its lock and then reacquire it
         // before jumping back to us.
+        //First schedule the main proc
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
-
+        //Now schedule the sub procs     
+        for(int i=0;i<p->sub_proc_count;i++){
+          swtch(&c->context, &p->sub_procs[i]->context);
+        }
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
