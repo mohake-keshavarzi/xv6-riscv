@@ -339,35 +339,39 @@ growproc(int n)
   return 0;
 }
 
+void test(void){
+  return ;
+}
 
 int
 new_thread(void (entry)(void )){
   struct proc *p = myproc(); // Get current process
-  struct thread *t = 0;
+  struct thread *th = 0;
 
   // Find an unused thread slot
   acquire(&p->lock);
-  // for (int i = 0; i < MAXTHREADNUM; i++) {
-  //     // if (p->threads[i].state == INACTIVE) {
-  //     //     t = &p->threads[i];
-  //     //     t->t_id = allocpid(); // Assign thread ID
-  //     //     t->state = ACTIVE;
-  //     //     break;
-  //     // }
-  // }
+  for(th=thr; th<&thr[TOTALTHREADS];th++){
+      if (th->state == INACTIVE) {
+          p->other_threads[p->other_threads_count]=th;
+          p->other_threads_count++;
+          th->t_id = allocpid(); // Assign thread ID
+          th->state = ACTIVE;
+          break;
+      }
+  }
 
-  if (!t) {
+  if (!th) {
       return -1; // No available thread slot
   }  
 
   // Initialize thread context
-  memset(&t->context, 0, sizeof(t->context));
-  t->context.ra = (uint64)entry;        // Set return address to entry point
-  t->context.sp = (uint64)(t->kstack + PGSIZE);  // Set stack pointer
+  memset(&th->context, 0, sizeof(th->context));
+  th->context.ra = (uint64)test;        // Set return address to entry point
+  th->context.sp = (uint64)(p->main_thread.kstack + PGSIZE);  // Set stack pointer
 
   release(&p->lock);
 
-  return t->t_id;
+  return th->t_id;
 }
 
 
