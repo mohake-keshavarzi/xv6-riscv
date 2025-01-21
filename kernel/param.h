@@ -13,5 +13,5 @@
 #define MAXPATH      128   // maximum file path name
 #define USERSTACK    1     // user stack pages
 
-#define MAXTHREADNUM 2     // maximum number of possible threads for each process
+#define MAXTHREADPERPROC 2     // maximum number of possible threads for each process
 #define MAINTHREADINDEX 0  // the index of the main thread among all threads in a process

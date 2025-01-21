@@ -55,7 +55,7 @@ procinit(void)
       initlock(&p->lock, "proc");
       p->state = UNUSED;
       //TODO _______________________________________________________________________________________________
-      p->threads[MAINTHREADINDEX].kstack = KSTACK((int) (p - proc)); ////////////////////////
+      p->main_thread.kstack = KSTACK((int) (p - proc)); ////////////////////////
   }
 }
 
@@ -163,10 +163,10 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
-  main_thread=&p->threads[MAINTHREADINDEX];
+  main_thread=&p->main_thread;
   main_thread->t_id = allocpid();
   main_thread->state=MAIN_THREAD;
-  
+  p->other_threads_count=0;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -198,7 +198,6 @@ found:
 static void
 freeproc(struct proc *p)
 {
-  struct thread *t;
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
@@ -213,9 +212,11 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
-  for(t=p->threads; t< &p->threads[MAXTHREADNUM]; t++){
-    t->state=INACTIVE;
+  p->main_thread.state = INACTIVE;
+  for(int i=0;i<p->other_threads_count;i++){
+      p->other_threads[i]->state=INACTIVE;
   }
+
 
   
 }
@@ -331,14 +332,14 @@ new_thread(void (entry)(void )){
 
   // Find an unused thread slot
   acquire(&p->lock);
-  for (int i = 0; i < MAXTHREADNUM; i++) {
-      if (p->threads[i].state == INACTIVE) {
-          t = &p->threads[i];
-          t->t_id = allocpid(); // Assign thread ID
-          t->state = ACTIVE;
-          break;
-      }
-  }
+  // for (int i = 0; i < MAXTHREADNUM; i++) {
+  //     // if (p->threads[i].state == INACTIVE) {
+  //     //     t = &p->threads[i];
+  //     //     t->t_id = allocpid(); // Assign thread ID
+  //     //     t->state = ACTIVE;
+  //     //     break;
+  //     // }
+  // }
 
   if (!t) {
       return -1; // No available thread slot
@@ -545,12 +546,19 @@ scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
-        for(t=p->threads; t< &p->threads[MAXTHREADNUM]; t++)
-          if(t->state==ACTIVE || t->state==MAIN_THREAD){
+        //First switch to the main thread
+        t=&p->main_thread;
+        c->thread=t;
+        swtch(&c->context, &t->context);
+            
+        for(int i=0;i<p->other_threads_count;i++){
+          t=p->other_threads[i];
+          if(t->state==ACTIVE){
             c->thread=t;
             swtch(&c->context, &t->context);
             // break;
           }
+        }
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
@@ -784,14 +792,15 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
     printf("  Threads:\n");
-    for (t= p->threads; t< &p->threads[MAXTHREADNUM]; t++){
-      if(t->state==ACTIVE){
+    
+    printf("  main-->t_id: ");
+    printf("%d",p->main_thread.t_id);
+    printf("\n");
+  
+    for(int i=0;i<p->other_threads_count;i++){
+        t=p->other_threads[i];
+        if(t->state==ACTIVE){
         printf("  -->t_id: ");
-        printf("%d",t->t_id);
-        printf("\n");
-      }
-      if(t->state==MAIN_THREAD){
-        printf("  *-->t_id: ");
         printf("%d",t->t_id);
         printf("\n");
       }

@@ -51,14 +51,17 @@ sys_next_process(void)
   else result.parent_pid=my_proc->parent->pid;
   result.heap_size=my_proc->sz;
   strncpy(result.name,my_proc->name,16);
-  for (int i = 0; i < MAXTHREADNUM; i++)
+  int i = 0;
+  for (; i < my_proc->other_threads_count; i++)
   {
-    if(my_proc->threads[i].state==ACTIVE || my_proc->threads[i].state==MAIN_THREAD)
-      result.active_tids[i]=my_proc->threads[i].t_id;
+    if(my_proc->other_threads[i]->state==ACTIVE)
+      result.active_tids[i]=my_proc->other_threads[i]->t_id;
     else
       result.active_tids[i]=-1;
 
   }
+  result.active_tids[i]=my_proc->main_thread.t_id;
+
   
   struct proc *p = myproc();
   return copyout(p->pagetable, result_addr, (char*)&result, sizeof(result))+1;

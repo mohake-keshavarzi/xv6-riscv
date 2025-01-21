@@ -6,5 +6,5 @@ struct process_data {
     int heap_size;
     enum proccess_state state;
     char name[16];
-    int active_tids[MAXTHREADNUM];
+    int active_tids[MAXTHREADPERPROC];
 };

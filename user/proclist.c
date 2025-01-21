@@ -14,7 +14,7 @@ main(int argc, char *argv[]){
         printf("next ---> PID:%d  Parent PID:%d   Heap Size:%d   State:%d   Name:%s\n"
         ,process_info.pid,process_info.parent_pid,process_info.heap_size,process_info.state,process_info.name);
         printf("\tThread IDs: ");
-        for (int i = 0; i < MAXTHREADNUM; i++)
+        for (int i = 0; i < MAXTHREADPERPROC; i++)
         {
             if(process_info.active_tids[i]!=-1)
                 printf("%d, ",process_info.active_tids[i]);
