@@ -51,8 +51,14 @@ sys_next_process(void)
   else result.parent_pid=my_proc->parent->pid;
   result.heap_size=my_proc->sz;
   strncpy(result.name,my_proc->name,16);
+  
   int i = 0;
-  for (; i < my_proc->other_threads_count; i++)
+  // First initialize all to -1 indicating inactive thread
+  for(i=0;i<MAXTHREADPERPROC;i++){
+    result.active_tids[i]=-1;
+  }
+  //Now really search for active ones
+  for (i=0; i < my_proc->other_threads_count; i++)
   {
     if(my_proc->other_threads[i]->state==ACTIVE)
       result.active_tids[i]=my_proc->other_threads[i]->t_id;
@@ -60,6 +66,7 @@ sys_next_process(void)
       result.active_tids[i]=-1;
 
   }
+  // For the main thread
   result.active_tids[i]=my_proc->main_thread.t_id;
 
   
