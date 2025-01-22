@@ -358,14 +358,17 @@ found:
     return 0;
   }
   // Set up new thread's stack
+  acquire(&p->lock);
   *(np->trapframe) = *(p->trapframe);
-  void* sret=stack + PGSIZE - 1 * sizeof(void *);
-  *(uint*)sret = 0xFFFFFFF;
-  np->trapframe->sp = (uint64)(stack + PGSIZE- 1 * sizeof(void *));
-  np->trapframe->epc = (uint64)entry; // Entry point
-
+  // void* sret=stack + PGSIZE - 1 * sizeof(void *);
+  // *(uint*)sret = 0xFFFFFFF;
   np->pagetable = p->pagetable;
   np->sz=p->sz;
+  release(&p->lock);
+  
+  np->trapframe->sp = 512;
+  np->trapframe->epc = (uint64)entry; // Entry point
+
 
   
   // Set up new context to start executing at forkret,
@@ -390,6 +393,11 @@ found:
   p->sub_procs[p->sub_proc_count]=np;
   p->sub_proc_count++;
   release(&p->lock);
+
+  acquire(&np->lock);
+  np->state=RUNNABLE;
+  release(&np->lock);
+
   return np->pid;
 }
 
