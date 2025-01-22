@@ -329,37 +329,68 @@ fork(void)
   return pid;
 }
 
-int clone(void (func)(void)) {
-    struct proc *np;
-    struct proc *p = myproc(); // Get the current process
-    // Allocate process slot
-    if ((np = allocproc()) == 0)
-        return -1;
+int clone(void(*entry)(void),void* stack) {
+  struct proc *np;
+  struct proc *p = myproc(); // Get the current process
 
-    release(&np->lock);
-    // Share address space
-    acquire(&p->lock);
-    p->sub_procs[p->sub_proc_count]=np;
-    p->sub_proc_count++;
-    release(&p->lock);
+  for(np = proc; np < &proc[NPROC]; np++) {
     acquire(&np->lock);
-    np->pagetable = p->pagetable;
-    np->state = RUNNABLE;
-    np->type=SUB;
+    if(np->state == UNUSED) {
+      goto found;
+    } else {
+      release(&np->lock);
+    }
+  }
+  return 0;
 
-    // Set up new thread's stack
-    // np->trapframe->sp = np->kstack + PGSIZE;
+found:
+  np->pid = allocpid();
+  np->state = USED;
+  np->type=SUB;
+  np->sub_proc_count=0;
+  safestrcpy(np->name, "SUB_PROC", sizeof(np->name));
 
-    np->trapframe->epc = (uint64)func; // Entry point
-    // *(uint64 *)(np->tf->sp - 8) = (uint64)arg; // Pass argument
 
-    // Inherit other properties
-    // np->parent = p;
-    // acquire(&np->lock);
-
+  // Allocate a trapframe page.
+  if((np->trapframe = (struct trapframe *)kalloc()) == 0){
+    freeproc(np);
     release(&np->lock);
+    return 0;
+  }
+  // Set up new thread's stack
+  *(np->trapframe) = *(p->trapframe);
+  void* sret=stack + PGSIZE - 1 * sizeof(void *);
+  *(uint*)sret = 0xFFFFFFF;
+  np->trapframe->sp = (uint64)(stack + PGSIZE- 1 * sizeof(void *));
+  np->trapframe->epc = (uint64)entry; // Entry point
 
-    return np->pid;
+  np->pagetable = p->pagetable;
+  np->sz=p->sz;
+
+  
+  // Set up new context to start executing at forkret,
+  // which returns to user space.
+  memset(&np->context, 0, sizeof(np->context));
+  np->context.ra = (uint64)forkret;
+  np->context.sp = np->kstack + PGSIZE;
+
+  // Cause fork to return 0 in the child.
+  np->trapframe->a0 = 0;
+
+  // increment reference counts on open file descriptors.
+  for(int i = 0; i < NOFILE; i++)
+    if(p->ofile[i])
+      np->ofile[i] = filedup(p->ofile[i]);
+  np->cwd = idup(p->cwd);
+    
+    
+  release(&np->lock);
+
+  acquire(&p->lock);
+  p->sub_procs[p->sub_proc_count]=np;
+  p->sub_proc_count++;
+  release(&p->lock);
+  return np->pid;
 }
 
 
@@ -506,6 +537,7 @@ scheduler(void)
         swtch(&c->context, &p->context);
         //Now schedule the sub procs     
         for(int i=0;i<p->sub_proc_count;i++){
+          
           swtch(&c->context, &p->sub_procs[i]->context);
         }
         // Process is done running for now.

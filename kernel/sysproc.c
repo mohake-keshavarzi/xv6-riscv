@@ -30,9 +30,10 @@ sys_fork(void)
 uint64
 sys_thread_create(void)
 {
-  uint64 entry;
+  uint64 entry,stack;
   argaddr(0,&entry);
-  return clone((void(*)(void))entry);
+  argaddr(1,&stack);
+  return clone((void(*)(void))entry,(void *)stack);
 }
 
 uint64
