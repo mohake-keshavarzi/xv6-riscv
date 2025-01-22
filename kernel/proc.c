@@ -539,7 +539,7 @@ scheduler(void)
         release(&p->lock);
         for(int i=0;i<p->sub_proc_count;i++){
           acquire(&p->sub_procs[i]->lock);
-          p->sub_procs[i] = RUNNING;
+          p->sub_procs[i]->state = RUNNING;
           c->proc = p->sub_procs[i];
           swtch(&c->context, &p->sub_procs[i]->context);
           release(&p->sub_procs[i]->lock);
