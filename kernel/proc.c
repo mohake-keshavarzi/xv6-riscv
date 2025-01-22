@@ -535,11 +535,16 @@ scheduler(void)
         p->state = RUNNING;
         c->proc = p;
         swtch(&c->context, &p->context);
-        //Now schedule the sub procs     
+        //Now schedule the sub procs
+        release(&p->lock);
         for(int i=0;i<p->sub_proc_count;i++){
-          
+          acquire(&p->sub_procs[i]->lock);
+          p->sub_procs[i] = RUNNING;
+          c->proc = p->sub_procs[i];
           swtch(&c->context, &p->sub_procs[i]->context);
+          release(&p->sub_procs[i]->lock);
         }
+        acquire(&p->lock);
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
