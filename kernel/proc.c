@@ -362,8 +362,8 @@ found:
   *(np->trapframe) = *(p->trapframe);
   np->pagetable = p->pagetable;
   np->sz=p->sz;
-  uint64 sp=np->sz;
-  sp = np->sz - (p->sub_proc_count+1)*2*USERSTACK*PGSIZE;
+  uint64 sp;
+  sp = p->sub_stacks[p->sub_proc_count];
   int blank = 0xFFFFFFF;
   sp -= sizeof(blank);
   sp -= sp%16;
@@ -378,7 +378,7 @@ found:
   // Set up new context to start executing at forkret,
   // which returns to user space.
   memset(&np->context, 0, sizeof(np->context));
-  // np->context.ra = (uint64)forkret;
+  np->context.ra = (uint64)forkret;
   np->context.sp = np->kstack + PGSIZE;
 
   // Cause fork to return 0 in the child.

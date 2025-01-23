@@ -13,5 +13,5 @@
 #define MAXPATH      128   // maximum file path name
 #define USERSTACK    1     // user stack pages
 
-#define NSUBPROCPERPROC 8  //number of sub_processes(threads) for each process
+#define NSUBPROCPERPROC 1  //number of sub_processes(threads) for each process
 

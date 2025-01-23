@@ -86,7 +86,14 @@ exec(char *path, char **argv)
     sz = sz1;
     uvmclear(pagetable, sz-(USERSTACK+1)*PGSIZE);
     sp = sz;
+    p->sub_stacks[i]=sp;
   }
+  //For main stack
+  if((sz1 = uvmalloc(pagetable, sz, sz + (USERSTACK+1)*PGSIZE, PTE_W)) == 0)
+      goto bad;
+    sz = sz1;
+    uvmclear(pagetable, sz-(USERSTACK+1)*PGSIZE);
+    sp = sz;
   stackbase = sp - USERSTACK*PGSIZE;
 
   // Push argument strings, prepare rest of stack in ustack.
