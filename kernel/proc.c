@@ -358,15 +358,19 @@ found:
     return 0;
   }
   // Set up new thread's stack
-  acquire(&p->lock);
+  acquire(&wait_lock);
   *(np->trapframe) = *(p->trapframe);
-  // void* sret=stack + PGSIZE - 1 * sizeof(void *);
-  // *(uint*)sret = 0xFFFFFFF;
   np->pagetable = p->pagetable;
   np->sz=p->sz;
-  release(&p->lock);
+  uint64 sp=np->sz;
+  sp = np->sz - (p->sub_proc_count+1)*2*USERSTACK*PGSIZE;
+  int blank = 0xFFFFFFF;
+  sp -= sizeof(blank);
+  sp -= sp%16;
+  copyout(np->pagetable, sp,(char *)&blank,sizeof(blank));
+  release(&wait_lock);
   
-  np->trapframe->sp = 512;
+  np->trapframe->sp=sp;  
   np->trapframe->epc = (uint64)entry; // Entry point
 
 
@@ -374,7 +378,7 @@ found:
   // Set up new context to start executing at forkret,
   // which returns to user space.
   memset(&np->context, 0, sizeof(np->context));
-  np->context.ra = (uint64)forkret;
+  // np->context.ra = (uint64)forkret;
   np->context.sp = np->kstack + PGSIZE;
 
   // Cause fork to return 0 in the child.
@@ -389,10 +393,10 @@ found:
     
   release(&np->lock);
 
-  acquire(&p->lock);
+  acquire(&wait_lock);
   p->sub_procs[p->sub_proc_count]=np;
   p->sub_proc_count++;
-  release(&p->lock);
+  release(&wait_lock);
 
   acquire(&np->lock);
   np->state=RUNNABLE;

@@ -12,7 +12,7 @@ void tr3(void){
     printf("I AM ALIVE");
 }
 void tr4(void){
-    printf("I AM ALIVE");
+      printf("I AM ALIVE");
 }
 void tr5(void){
     printf("I AM ALIVE");
@@ -23,7 +23,7 @@ int
 main(int argc, char *argv[])
 {
   // int i=0;
-
+  getpid();
   printf("Inside tester\n");
   printf("the func:%ld\n",(uint64)tr);
   printf("the func:%ld\n",(uint64)tr2);

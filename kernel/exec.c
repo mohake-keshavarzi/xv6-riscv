@@ -80,11 +80,13 @@ exec(char *path, char **argv)
   // Use the rest as the user stack.
   sz = PGROUNDUP(sz);
   uint64 sz1;
-  if((sz1 = uvmalloc(pagetable, sz, sz + (USERSTACK+1)*PGSIZE, PTE_W)) == 0)
-    goto bad;
-  sz = sz1;
-  uvmclear(pagetable, sz-(USERSTACK+1)*PGSIZE);
-  sp = sz;
+  for(int i=0;i<NSUBPROCPERPROC;i++){
+    if((sz1 = uvmalloc(pagetable, sz, sz + (USERSTACK+1)*PGSIZE, PTE_W)) == 0)
+      goto bad;
+    sz = sz1;
+    uvmclear(pagetable, sz-(USERSTACK+1)*PGSIZE);
+    sp = sz;
+  }
   stackbase = sp - USERSTACK*PGSIZE;
 
   // Push argument strings, prepare rest of stack in ustack.
