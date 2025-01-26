@@ -364,10 +364,10 @@ found:
   np->sz=p->sz;
   uint64 sp;
   sp = p->sub_stacks[p->sub_proc_count];
-  int blank = 0xFFFFFFF;
-  sp -= sizeof(blank);
-  sp -= sp%16;
-  copyout(np->pagetable, sp,(char *)&blank,sizeof(blank));
+  // int blank = 0xFFFFFFF;
+  // sp -= sizeof(blank);
+  // sp -= sp%16;
+  // copyout(np->pagetable, sp,(char *)&blank,sizeof(blank));
   release(&wait_lock);
   
   np->trapframe->sp=sp;  
@@ -537,7 +537,7 @@ scheduler(void)
 
     int found = 0;
     for(p = proc; p < &proc[NPROC]; p++) {
-      if(p->type==SUB) continue;
+      // if(p->type==SUB) continue;
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
         // Switch to chosen process.  It is the process's job
@@ -548,18 +548,18 @@ scheduler(void)
         c->proc = p;
         swtch(&c->context, &p->context);
         //Now schedule the sub procs
-        release(&p->lock);
-        for(int i=0;i<p->sub_proc_count;i++){
-          acquire(&p->sub_procs[i]->lock);
-          struct proc* sub=p->sub_procs[i];
-          if(sub->state==RUNNABLE){
-            sub->state = RUNNING;
-            c->proc = sub;
-            swtch(&c->context, &sub->context);
-          }
-          release(&p->sub_procs[i]->lock);
-        }
-        acquire(&p->lock);
+        // release(&p->lock);
+        // for(int i=0;i<p->sub_proc_count;i++){
+        //   acquire(&p->sub_procs[i]->lock);
+        //   struct proc* sub=p->sub_procs[i];
+        //   if(sub->state==RUNNABLE){
+        //     sub->state = RUNNING;
+        //     c->proc = sub;
+        //     swtch(&c->context, &sub->context);
+        //   }
+        //   release(&p->sub_procs[i]->lock);
+        // }
+        // acquire(&p->lock);
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
